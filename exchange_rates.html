@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exchange Rates Report</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Exchange Rates Report</h1>
+    <table class="dataframe rate-table">
+  <thead>
+    <tr style="text-align: right;">
+      <th>Currency Code</th>
+      <th>Rate</th>
+      <th>Mean Historical Rate</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>USD</td>
+      <td>1.1794</td>
+      <td>1.1823</td>
+    </tr>
+    <tr>
+      <td>SEK</td>
+      <td>10.6735</td>
+      <td>9.6887</td>
+    </tr>
+    <tr>
+      <td>GBP</td>
+      <td>0.8679</td>
+      <td>0.7847</td>
+    </tr>
+    <tr>
+      <td>JPY</td>
+      <td>185.2700</td>
+      <td>131.5839</td>
+    </tr>
+  </tbody>
+</table>
+    <div class="footer">
+        <p>Exchange rates relative to EUR | Source: European Central Bank</p>
+    </div>
+</body>
+</html>
