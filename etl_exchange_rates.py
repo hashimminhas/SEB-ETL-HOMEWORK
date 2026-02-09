@@ -4,6 +4,10 @@ ETL script for processing ECB exchange rate data from CSV files.
 This script reads daily and historical exchange rate CSV files from the European Central Bank,
 extracts rates for specific currencies (USD, SEK, GBP, JPY), calculates historical means,
 and generates an HTML report.
+
+NOTE: The ECB data source (eurofxref.zip, eurofxref-hist.zip) provides data in CSV format
+within the ZIP archives. This script processes that CSV data directly.
+
 """
 
 from pathlib import Path
@@ -29,19 +33,16 @@ def parse_daily_rates(csv_file: Path) -> Dict[str, float]:
         FileNotFoundError: If the CSV file doesn't exist
         ValueError: If the CSV is malformed, empty, or missing required currencies
     """
-    print(f"📖 Reading daily rates from {csv_file.name}...")
+    print(f"INFO: Reading daily rates from {csv_file.name}...")
     
-    # Check if file exists before attempting to parse
     if not csv_file.exists():
         error_msg: str = f"Daily rates file not found: {csv_file}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise FileNotFoundError(error_msg)
     
     try:
-        # Read CSV file with flexible whitespace handling
         df: pd.DataFrame = pd.read_csv(csv_file, skipinitialspace=True)
         
-        # Validate CSV is not empty
         if len(df) == 0:
             raise ValueError("CSV file is empty - no data rows found")
         
@@ -49,7 +50,6 @@ def parse_daily_rates(csv_file: Path) -> Dict[str, float]:
         missing_currencies: List[str] = []
         invalid_currencies: List[str] = []
         
-        # Extract rates for target currencies from the first row
         currency: str
         for currency in TARGET_CURRENCIES:
             if currency not in df.columns:
@@ -58,45 +58,41 @@ def parse_daily_rates(csv_file: Path) -> Dict[str, float]:
             
             rate_value: Any = df[currency].iloc[0]
             
-            # Handle N/A or missing values
             if pd.isna(rate_value) or rate_value == '' or rate_value == 'N/A':
                 invalid_currencies.append(currency)
                 continue
             
-            # Validate rate is numeric
             try:
                 rate_float: float = float(rate_value)
                 if rate_float <= 0:
-                    print(f"⚠️ Warning: {currency} has non-positive rate: {rate_float}")
+                    print(f"WARNING: {currency} has non-positive rate: {rate_float}")
                 daily_rates[currency] = rate_float
             except (ValueError, TypeError) as e:
-                print(f"⚠️ Warning: Invalid rate value for {currency}: {rate_value}")
+                print(f"WARNING: Invalid rate value for {currency}: {rate_value}")
                 invalid_currencies.append(currency)
         
-        # Report issues with missing or invalid currencies
         if missing_currencies:
-            print(f"⚠️ Warning: Missing columns in CSV: {', '.join(missing_currencies)}")
+            print(f"WARNING: Missing columns in CSV: {', '.join(missing_currencies)}")
         
         if invalid_currencies:
-            print(f"⚠️ Warning: Invalid/missing values for: {', '.join(invalid_currencies)}")
+            print(f"WARNING: Invalid/missing values for: {', '.join(invalid_currencies)}")
         
-        # Ensure we have at least some valid data
         if not daily_rates:
             raise ValueError(
                 f"No valid rates found for any target currencies. "
                 f"Missing: {missing_currencies}, Invalid: {invalid_currencies}"
             )
         
-        print(f"✓ Extracted {len(daily_rates)} daily rates")
+        print(f"SUCCESS: Extracted {len(daily_rates)} daily rates")
         return daily_rates
         
     except pd.errors.EmptyDataError:
         error_msg: str = f"CSV file is empty or malformed: {csv_file}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise ValueError(error_msg)
     except pd.errors.ParserError as e:
         error_msg: str = f"Failed to parse CSV file: {e}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise ValueError(error_msg)
     except FileNotFoundError:
         raise
@@ -104,7 +100,7 @@ def parse_daily_rates(csv_file: Path) -> Dict[str, float]:
         raise
     except Exception as e:
         error_msg: str = f"Unexpected error reading daily rates: {type(e).__name__}: {e}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise RuntimeError(error_msg) from e
 
 
@@ -122,12 +118,10 @@ def parse_historical_rates(csv_file: Path) -> pd.DataFrame:
         FileNotFoundError: If the CSV file doesn't exist
         ValueError: If the CSV is malformed, empty, or missing required currencies
     """
-    print(f"📖 Reading historical rates from {csv_file.name}...")
-    
-    # Check if file exists before attempting to parse
+    print(f"INFO: Reading historical rates from {csv_file.name}...")
     if not csv_file.exists():
         error_msg: str = f"Historical rates file not found: {csv_file}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise FileNotFoundError(error_msg)
     
     try:
@@ -152,7 +146,7 @@ def parse_historical_rates(csv_file: Path) -> pd.DataFrame:
         for currency in TARGET_CURRENCIES:
             if currency not in df.columns:
                 missing_currencies.append(currency)
-                print(f"⚠️ Warning: Currency {currency} not found in historical data")
+                print(f"WARNING: Currency {currency} not found in historical data")
                 continue
             
             # Extract all non-null values for this currency
@@ -187,7 +181,7 @@ def parse_historical_rates(csv_file: Path) -> pd.DataFrame:
         
         # Report missing currencies
         if missing_currencies:
-            print(f"⚠️ Warning: Missing currencies in CSV columns: {', '.join(missing_currencies)}")
+            print(f"WARNING: Missing currencies in CSV columns: {', '.join(missing_currencies)}")
         
         # Validate we have data
         if not historical_data:
@@ -200,18 +194,18 @@ def parse_historical_rates(csv_file: Path) -> pd.DataFrame:
         
         # Report summary of data extracted
         for curr, count in currencies_found.items():
-            print(f"  → {curr}: {count} records")
+            print(f"  - {curr}: {count} records")
         
-        print(f"✓ Extracted {len(result_df)} historical rate records")
+        print(f"SUCCESS: Extracted {len(result_df)} historical rate records")
         return result_df
         
     except pd.errors.EmptyDataError:
         error_msg: str = f"CSV file is empty or malformed: {csv_file}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise ValueError(error_msg)
     except pd.errors.ParserError as e:
         error_msg: str = f"Failed to parse CSV file: {e}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise ValueError(error_msg)
     except FileNotFoundError:
         raise
@@ -219,7 +213,7 @@ def parse_historical_rates(csv_file: Path) -> pd.DataFrame:
         raise
     except Exception as e:
         error_msg: str = f"Unexpected error reading historical rates: {type(e).__name__}: {e}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise RuntimeError(error_msg) from e
 
 
@@ -236,7 +230,7 @@ def calculate_mean_rates(df: pd.DataFrame) -> Dict[str, float]:
     Raises:
         ValueError: If DataFrame is empty or missing required columns
     """
-    print("📊 Calculating mean historical rates...")
+    print("INFO: Calculating mean historical rates...")
     
     # Validate input DataFrame
     if df.empty:
@@ -251,18 +245,18 @@ def calculate_mean_rates(df: pd.DataFrame) -> Dict[str, float]:
         # Validate all target currencies have means
         missing_means: List[str] = [curr for curr in TARGET_CURRENCIES if curr not in mean_rates]
         if missing_means:
-            print(f"⚠️ Warning: No historical data to calculate means for: {', '.join(missing_means)}")
+            print(f"WARNING: No historical data to calculate means for: {', '.join(missing_means)}")
         
         # Report calculated means
         for currency, mean_value in mean_rates.items():
-            print(f"  → {currency}: {mean_value:.4f}")
+            print(f"  - {currency}: {mean_value:.4f}")
         
-        print(f"✓ Calculated means for {len(mean_rates)} currencies")
+        print(f"SUCCESS: Calculated means for {len(mean_rates)} currencies")
         return mean_rates
     
     except Exception as e:
         error_msg: str = f"Error calculating mean rates: {type(e).__name__}: {e}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise RuntimeError(error_msg) from e
 
 
@@ -277,7 +271,7 @@ def create_html_table(daily_rates: Dict[str, float], mean_rates: Dict[str, float
     Returns:
         HTML string containing the formatted table
     """
-    print("🔨 Creating HTML table...")
+    print("INFO: Creating HTML table...")
     
     # Create DataFrame for easy table generation
     table_data: List[Dict[str, str | float]] = []
@@ -353,7 +347,7 @@ def create_html_table(daily_rates: Dict[str, float], mean_rates: Dict[str, float
 </html>
 """
     
-    print("✓ HTML table created successfully")
+    print("SUCCESS: HTML table created successfully")
     return html
 
 
@@ -369,7 +363,7 @@ def save_html_report(html_content: str, output_file: Path) -> None:
         IOError: If file cannot be written
         PermissionError: If lacking write permissions
     """
-    print(f"💾 Saving HTML report to {output_file.name}...")
+    print(f"INFO: Saving HTML report to {output_file.name}...")
     
     # Validate HTML content is not empty
     if not html_content or not html_content.strip():
@@ -388,19 +382,19 @@ def save_html_report(html_content: str, output_file: Path) -> None:
             raise IOError(f"File was not created: {output_file}")
         
         file_size: int = output_file.stat().st_size
-        print(f"✓ Report saved successfully to {output_file.absolute()} ({file_size:,} bytes)")
+        print(f"SUCCESS: Report saved successfully to {output_file.absolute()} ({file_size:,} bytes)")
         
     except PermissionError as e:
         error_msg: str = f"Permission denied writing to {output_file}: {e}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise
     except IOError as e:
         error_msg: str = f"I/O error saving HTML report: {e}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise
     except Exception as e:
         error_msg: str = f"Unexpected error saving HTML report: {type(e).__name__}: {e}"
-        print(f"❌ {error_msg}")
+        print(f"ERROR: {error_msg}")
         raise RuntimeError(error_msg) from e
 
 
@@ -412,7 +406,7 @@ def main() -> int:
         Exit code (0 for success, 1 for failure)
     """
     print("=" * 60)
-    print("🚀 Starting Exchange Rate ETL Pipeline")
+    print("INFO: Starting Exchange Rate ETL Pipeline")
     print("=" * 60)
     
     try:
@@ -431,7 +425,7 @@ def main() -> int:
         
         if missing_files:
             error_msg: str = f"Required input files not found: {', '.join(missing_files)}"
-            print(f"❌ {error_msg}")
+            print(f"ERROR: {error_msg}")
             raise FileNotFoundError(error_msg)
         
         # Step 1: Parse daily rates
@@ -448,7 +442,7 @@ def main() -> int:
         missing_all: List[str] = [curr for curr in TARGET_CURRENCIES if curr not in all_currencies]
         
         if missing_all:
-            print(f"⚠️ Warning: No data found for currencies: {', '.join(missing_all)}")
+            print(f"WARNING: No data found for currencies: {', '.join(missing_all)}")
         
         if not daily_rates and not mean_rates:
             raise ValueError("No exchange rate data found in either daily or historical files")
@@ -460,14 +454,14 @@ def main() -> int:
         save_html_report(html_content, output_html)
         
         print("=" * 60)
-        print("✅ ETL Pipeline completed successfully!")
+        print("SUCCESS: ETL Pipeline completed successfully!")
         print("=" * 60)
         
         return 0
         
     except Exception as e:
         print("=" * 60)
-        print(f"❌ ETL Pipeline failed: {e}")
+        print(f"ERROR: ETL Pipeline failed: {e}")
         print("=" * 60)
         return 1
 
