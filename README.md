@@ -127,7 +127,8 @@ All errors are logged to the console with clear, descriptive messages.
 
 ## AI Tool Usage
 
-This solution was developed with assistance from GitHub Copilot and Claude AI for code structure, XML parsing logic, and documentation.
+This solution was developed with assistance from GitHub Copilot and 
+Claude AI for code structure, CSV data processing, and documentation.
 
 ## License
 
