@@ -1,0 +1,4 @@
+# Python package requirements for etl_exchange_rates.py
+# Compatible with Python 3.12+
+
+pandas>=2.2.0
