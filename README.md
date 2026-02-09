@@ -47,10 +47,10 @@ Execute the ETL pipeline with:
 python etl_exchange_rates.py
 ```
 
-Or with the full path to your virtual environment:
+Or with the full path to your virtual environment: describe your local path in place of `Your local path`:
 
 ```powershell
-& "C:/Users/Hashim Ali/Desktop/seb-etl-homework/.venv/Scripts/python.exe" etl_exchange_rates.py
+& "Your local path/seb-etl-homework/.venv/Scripts/python.exe" etl_exchange_rates.py
 ```
 
 ### Input Files
